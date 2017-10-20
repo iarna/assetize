@@ -1,0 +1,23 @@
+{
+  "name": "assetize",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": "index.js",
+  "keywords": [],
+  "author": "Rebecca Turner <me@re-becca.org> (http://re-becca.org/)",
+  "license": "ISC",
+  "dependencies": {
+    "@iarna/cli": "^1.2.0",
+    "@perl/qx": "^1.0.2",
+    "@perl/system": "^1.0.2",
+    "bluebird": "^3.5.1",
+    "glob": "^7.1.2",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.6.2"
+  },
+  "devDependencies": {
+    "@iarna/demo-esm-1": "^1.0.3",
+    "@iarna/demo-esm-2": "^1.0.3"
+  }
+}
