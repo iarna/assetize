@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "bin": "index.js",
+  "scripts": {
+    "start": "./tryme.sh"
+  },
   "keywords": [],
   "author": "Rebecca Turner <me@re-becca.org> (http://re-becca.org/)",
   "license": "ISC",
@@ -17,6 +20,7 @@
     "rimraf": "^2.6.2"
   },
   "devDependencies": {
-    "@iarna/demo-esm-2": "^1.0.3"
+    "@iarna/demo-esm-2": "^1.0.3",
+    "serve": "^6.3.1"
   }
 }

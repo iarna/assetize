@@ -9,7 +9,7 @@ $ assetize name-of-module
 ```
 
 To see the source for the example modules, check out `demo/1` and `demo/2`. 
-To try it out, run `tryme.sh`.
+To try it out, run `npm start` (which just runs `tryme.sh`)
 
 Then checkout `http://localhost:5000/demo.html` or browse around in `assets/` to see
 how things were transformed.
