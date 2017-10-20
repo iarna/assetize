@@ -16,20 +16,34 @@ const yargs = require('@iarna/cli')(main)
 
 async function main (opts, name) {
   if (name) {
-    return installModule(opts._)
+    await installModule(opts._)
   } else {
     yargs.showHelp()
   }
 }
 
-async function installModule (modules) {
-  await Bluebird.map(modules, async name => {
-    let packument = JSON.parse(await qx`npm show ${name} --json`)
-    if (Array.isArray(packument)) packument = packument[0]
-    const tarball = await qx`npm pack "${name}"`
-    await Bluebird.resolve(installFromTarball(packument, tarball)).finally(() => unlink(tarball))
-  })
-  console.log(`${modules.length} module${modules.length !== 1 ? 's' : ''} installed.`)
+const seenThisRun = new Set()
+
+async function installModules (modules) {
+  await Bluebird.map(modules, installModule)
+}
+
+async function installModule (name) {
+  if (seenThisRun.has(name)) return
+  console.log('! installing ' + name)
+  seenThisRun.add(name)
+  let packument = JSON.parse(await qx`npm show ${name} --json`)
+  if (Array.isArray(packument)) packument = packument[0]
+  const tarball = await qx`npm pack "${name}"`
+  await Bluebird.resolve(installFromTarball(packument, tarball)).finally(() => unlink(tarball))
+}
+
+async function installFromTarball (packument, tarball) {
+  await rimraf(`assets/${packument.name}`)
+  await mkdirp(`assets/${packument.name}`)
+  await system(`tar xf "${tarball}" --strip-components 1 -C "assets/${packument.name}"`)
+  await transformTheJS(packument.name)
+  await installModules(Object.keys(packument.dependencies || {}).map(name => `${name}@${packument.dependencies[name]}`))
 }
 
 function parseReq (name) {
@@ -40,13 +54,10 @@ function parseReq (name) {
   }
 }
 
-async function installFromTarball (packument, tarball) {
-  await rimraf(`assets/${packument.name}`)
-  await mkdirp(`assets/${packument.name}`)
-  await system(`tar xf "${tarball}" --strip-components 1 -C "assets/${packument.name}"`)
-  const mjs = await glob(`assets/${packument.name}/**/*.mjs`)
+async function transformTheJS (name) {
+  const mjs = await glob(`assets/${name}/**/*.mjs`)
   await Bluebird.map(mjs, file => rename(file, file.replace(/[.]mjs$/, '.js')))
-  const js = await glob(`assets/${packument.name}/**/*.js`)
+  const js = await glob(`assets/${name}/**/*.js`)
   await Bluebird.map(js, async file => {
     let content = await readFile(file, 'utf8')
     content = content.replace(/(import.*from.*['"])([A-Za-z@.][-A-Za-z0-9_/]+[^"']*)/g, (match, prelude, spec) => {

@@ -17,7 +17,6 @@
     "rimraf": "^2.6.2"
   },
   "devDependencies": {
-    "@iarna/demo-esm-1": "^1.0.3",
     "@iarna/demo-esm-2": "^1.0.3"
   }
 }
