@@ -3,6 +3,13 @@
 A CLI that extracts ESM into `assets/` and transforms their import
 statements from module names to paths in the asset folder.
 
+```
+$ assetize name-of-module
+1 module installed.
+```
+
+(It only supports one module at a time, ¯\\\_(ツ)\_/¯)
+
 To see the source for the example modules, check out `demo/1` and `demo/2`. 
 To try it out, run `tryme.sh`.
 
