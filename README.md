@@ -53,5 +53,5 @@ console.log(demo())
 # proof-of-concept
 
 This is a proof of concept.  It uses probably fragile regexps to do
-replacement.  It only supports JS.  It doesn't recursively look up modules
-or handle conflicts.
+replacement.  It only supports JS.  It doesn't handle version conflicts in
+modules (last processed wins, there are races).
