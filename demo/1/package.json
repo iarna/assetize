@@ -1,4 +1,5 @@
 {
   "name": "@iarna/demo-esm-1",
-  "version": "1.0.3"
+  "version": "1.0.4",
+  "main": "main.mjs"
 }
