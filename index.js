@@ -7,6 +7,7 @@ const unlink = Bluebird.promisify(fs.unlink)
 const readFile = Bluebird.promisify(fs.readFile)
 const writeFile = Bluebird.promisify(fs.writeFile)
 const rename = Bluebird.promisify(fs.rename)
+const stat = Bluebird.promisify(fs.stat)
 const mkdirp = Bluebird.promisify(require('mkdirp'))
 const rimraf = Bluebird.promisify(require('rimraf'))
 const glob = Bluebird.promisify(require('glob'))
@@ -16,7 +17,9 @@ const yargs = require('@iarna/cli')(main)
 
 async function main (opts, name) {
   if (name) {
-    await installModule(opts._)
+    const proj = JSON.parse(await readFile('package.json'))
+    await installModules(proj, opts._, true)
+    await writeFile('package.json', JSON.stringify(proj, null, 2))
   } else {
     yargs.showHelp()
   }
@@ -24,26 +27,41 @@ async function main (opts, name) {
 
 const seenThisRun = new Set()
 
-async function installModules (modules) {
-  await Bluebird.map(modules, installModule)
+async function installModules (proj, modules, isTop) {
+  await Bluebird.map(modules, name => installModule(proj, name, isTop))
 }
 
-async function installModule (name) {
+async function installModule (proj, name, isTop) {
   if (seenThisRun.has(name)) return
-  console.log('! installing ' + name)
+  console.log('! installing', name)
   seenThisRun.add(name)
   let packument = JSON.parse(await qx`npm show ${name} --json`)
   if (Array.isArray(packument)) packument = packument[0]
   const tarball = await qx`npm pack "${name}"`
-  await Bluebird.resolve(installFromTarball(packument, tarball)).finally(() => unlink(tarball))
+  await Bluebird.resolve(installFromTarball(proj, packument, tarball)).finally(() => unlink(tarball))
 }
 
-async function installFromTarball (packument, tarball) {
+function hasScope (name) {
+  return String(name)[0] === '@'
+}
+
+async function installFromTarball (proj, packument, tarball) {
   await rimraf(`assets/${packument.name}`)
   await mkdirp(`assets/${packument.name}`)
   await system(`tar xf "${tarball}" --strip-components 1 -C "assets/${packument.name}"`)
+  const pkg = JSON.parse(await readFile(`assets/${packument.name}/package.json`))
   await transformTheJS(packument.name)
-  await installModules(Object.keys(packument.dependencies || {}).map(name => `${name}@${packument.dependencies[name]}`))
+  await installModules(proj, Object.keys(pkg.dependencies || {}).map(name => `${name}@${pkg.dependencies[name]}`))
+  let main = (pkg.main || 'index.js').replace(/[.]mjs$/, '.js')
+  if (!await exists(main) && await exists(main + '.js')) {
+    main += '.js'
+  }
+  const prefix = hasScope(pkg.name) ? pkg.name.slice(pkg.name.indexOf('/')+1) : pkg.name
+
+  await writeFile(`assets/${pkg.name}.js`,
+    `export * from './${prefix}/${main}'\n` +
+    `import def from './${prefix}/${main}'\n` +
+    `export default def\n`)
 }
 
 function parseReq (name) {
@@ -51,6 +69,15 @@ function parseReq (name) {
   return {
     name: matched[1],
     pathinfo: matched[2]
+  }
+}
+
+async function exists (name) {
+  try {
+    await stat(name)
+    return true
+  } catch (_) {
+    return false
   }
 }
 
@@ -62,13 +89,13 @@ async function transformTheJS (name) {
     let content = await readFile(file, 'utf8')
     content = content.replace(/(import.*from.*['"])([A-Za-z@.][-A-Za-z0-9_/]+[^"']*)/g, (match, prelude, spec) => {
       const thisModule = parseReq(spec)
-      let path = thisModule.name === '.' ? './' : '../../' + thisModule.name + '/'
+      let path = thisModule.name === '.' ? './' : '../../' + thisModule.name
       if (thisModule.pathinfo) {
-        path += thisModule.pathinfo
+        path += '/' + thisModule.pathinfo
         // not included, loading dirs and having it find `index.js`
         // loading a filename w/o an extension
       } else {
-        path += 'index.js'
+        path += '.js'
       }
       return `${prelude}${path.replace(/([.]mjs)$/, '.js')}`
     })

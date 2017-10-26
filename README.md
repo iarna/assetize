@@ -18,14 +18,14 @@ Loading an asset looks like:
 
 ```
 <script type="module">
-  import moduleName from './assets/module-name/index.js'
+  import moduleName from './assets/module-name.js'
 </script>
 ```
 
 or
 
 ```
-<script type="module" src="./assets/module-name/index.js"></script>
+<script type="module" src="./assets/module-name.js"></script>
 ```
 
 Which isn't super pretty, but if you only have to do it once it's not so
