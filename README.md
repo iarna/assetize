@@ -53,5 +53,10 @@ console.log(demo())
 # proof-of-concept
 
 This is a proof of concept.  It uses probably fragile regexps to do
-replacement.  It only supports JS.  It doesn't handle version conflicts in
-modules (last processed wins, there are races).
+replacement.
+
+# stuff remaining to be proofed
+
+1. assetDependencies package.json section
+2. saving assets to package-lock or asset-lock
+3. handling version conflicts in entirely flat trees
