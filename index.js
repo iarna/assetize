@@ -17,11 +17,23 @@ const yargs = require('@iarna/cli')(main)
 
 async function main (opts, name) {
   if (name) {
-    const proj = JSON.parse(await readFile('package.json'))
+    let proj
+    try {
+      proj = JSON.parse(await readFile('package.json'))
+    } catch (_) {
+      proj = {}
+    }
+    if (!proj.assetDependencies) proj.assetDependencies = {}
     await installModules(proj, opts._, true)
     await writeFile('package.json', JSON.stringify(proj, null, 2))
   } else {
-    yargs.showHelp()
+    try {
+      const proj = JSON.parse(await readFile('package.json'))
+      const assetDeps = proj.assetDependencies || {}
+      await installModules(proj, Object.keys(assetDeps).map(n => `${n}@${assetDeps[n]}`), true)
+    } catch (_) {
+      yargs.showHelp()
+    }
   }
 }
 
@@ -38,7 +50,10 @@ async function installModule (proj, name, isTop) {
   let packument = JSON.parse(await qx`npm show ${name} --json`)
   if (Array.isArray(packument)) packument = packument[0]
   const tarball = await qx`npm pack "${name}"`
-  await Bluebird.resolve(installFromTarball(proj, packument, tarball)).finally(() => unlink(tarball))
+  const pkg = await Bluebird.resolve(installFromTarball(proj, packument, tarball)).finally(() => unlink(tarball))
+  if (isTop && pkg.version && !proj.assetDependencies[pkg.name]) {
+    proj.assetDependencies[pkg.name] = `^${pkg.version}`
+  }
 }
 
 function hasScope (name) {
@@ -62,6 +77,7 @@ async function installFromTarball (proj, packument, tarball) {
     `export * from './${prefix}/${main}'\n` +
     `import def from './${prefix}/${main}'\n` +
     `export default def\n`)
+  return pkg
 }
 
 function parseReq (name) {
