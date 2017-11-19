@@ -24,6 +24,7 @@
     "serve": "^6.3.1"
   },
   "assetDependencies": {
-    "@iarna/demo-esm-2": "^1.0.3"
+    "@iarna/demo-esm-2": "^1.0.3",
+    "async-es": "^2.6.0"
   }
 }

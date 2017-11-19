@@ -6,6 +6,12 @@
   import demo from './assets/@iarna/demo-esm-2.js'
   
   alert(demo())
+
+  import async from './assets/async-es.js'
+  async.forEachOf({abc: 123, def: 456}, (value, key, cb) => {
+    console.log(value + ' = ' + key)
+    cb()
+  })
 </script>
 </head>
 </html>
