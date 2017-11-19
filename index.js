@@ -105,7 +105,7 @@ async function transformTheJS (name) {
     let content = await readFile(file, 'utf8')
     content = content.replace(/(import.*from.*['"])([A-Za-z@.][-A-Za-z0-9_/]+[^"']*)/g, (match, prelude, spec) => {
       const thisModule = parseReq(spec)
-      let path = thisModule.name === '.' ? './' : '../../' + thisModule.name
+      let path = (thisModule.name === '.' ? './' : hasScope(thisModule.name) ? '../../' : '../') + thisModule.name
       if (thisModule.pathinfo) {
         path += '/' + thisModule.pathinfo
         // not included, loading dirs and having it find `index.js`
