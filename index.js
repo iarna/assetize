@@ -1,6 +1,7 @@
 'use strict'
 const system = require('@perl/system')
 const qx = require('@perl/qx')
+const path = require('path')
 const Bluebird = require('bluebird')
 const fs = require('fs')
 const unlink = Bluebird.promisify(fs.unlink)
@@ -103,17 +104,19 @@ async function transformTheJS (name) {
   const js = await glob(`assets/${name}/**/*.js`)
   await Bluebird.map(js, async file => {
     let content = await readFile(file, 'utf8')
-    content = content.replace(/(import.*from.*['"])([A-Za-z@.][-A-Za-z0-9_/]+[^"']*)/g, (match, prelude, spec) => {
+    content = content.replace(/(import.*from.*['"])([A-Za-z@.][.]?[-A-Za-z0-9_/]+[^"']*)/g, (match, prelude, spec) => {
       const thisModule = parseReq(spec)
-      let path = (thisModule.name === '.' ? './' : hasScope(thisModule.name) ? '../../' : '../') + thisModule.name
+      path.relative('assets/foo/bar.js', path.resolve('assets/foo/bar.js', './././foo.js'))
+      let modpath = thisModule.name[0] === '.'
+                  ? path.relative(path.dirname(file), path.resolve(path.dirname(file), thisModule.name))
+                  : path.relative(path.dirname(file), path.resolve(`assets/${thisModule.name}`))
       if (thisModule.pathinfo) {
-        path += '/' + thisModule.pathinfo
+        modpath += (modpath ? '/' : './') + thisModule.pathinfo.trim()
         // not included, loading dirs and having it find `index.js`
         // loading a filename w/o an extension
-      } else {
-        path += '.js'
       }
-      return `${prelude}${path.replace(/([.]mjs)$/, '.js')}`
+      if (!/[.]\w+$/.test(modpath)) modpath += '.js'
+      return `${prelude}${modpath.replace(/([.]mjs)$/, '.js')}`
     })
     await writeFile(file, content)
   })
