@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 'use strict'
 const system = require('@perl/system')
 const qx = require('@perl/qx')
