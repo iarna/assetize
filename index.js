@@ -76,8 +76,7 @@ async function installFromTarball (proj, packument, tarball) {
 
   await writeFile(`assets/${pkg.name}.js`,
     `export * from './${prefix}/${main}'\n` +
-    `import def from './${prefix}/${main}'\n` +
-    `export default def\n`)
+    `export { default } from './${prefix}/${main}'\n`)
   return pkg
 }
 
