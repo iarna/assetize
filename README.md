@@ -1,5 +1,8 @@
 # proof-of-concept asset installer
 
+**Please note that future work on this will happen at [npm/npm#npm-asset](https://github.com/npm/npm/tree/npm-asset), if you'd like to discuss it please drop by the #npm channel on the https://package.community Discord.**
+
+
 A CLI that extracts ESM into `assets/` and transforms their import
 statements from module names to paths in the asset folder.
 
